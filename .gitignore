@@ -1,0 +1,11 @@
+# Ignore macOS hidden files.
+.DS_Store
+
+# Ignore code editor config files.
+.nova/
+.vscode/
+
+# Ignore game pdx.
+*.pdx
+*.zip
+art/
