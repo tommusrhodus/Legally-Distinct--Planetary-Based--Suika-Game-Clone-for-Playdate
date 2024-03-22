@@ -4,6 +4,11 @@ local gfx <const> = pd.graphics
 class('Menu').extends()
 
 function Menu:init()
+	-- Enable konami code on the menu.
+	self.primeKonami = false
+	self.kawaii = saveData.kawaii
+	self.konami = self:addKawaiiCode()
+
 	local bgimage = gfx.image.new("assets/images/menu-bg.png")
 	self.bg = gfx.sprite.new(bgimage)
 	self.bg:moveTo(0, 0)
@@ -15,7 +20,8 @@ function Menu:init()
 	self.suikaText:moveTo(600, 120)
 	self.suikaText:setUpdatesEnabled(false)
 
-	local legalText = gfx.image.new("assets/images/legally.png")
+	local legalURL = self.kawaii and "assets/images/legally-kawaii.png" or "assets/images/legally.png"
+	local legalText = gfx.image.new(legalURL)
 	self.legalText = gfx.sprite.new(legalText)
 	self.legalText:moveTo(600, 32)
 	self.legalText:setUpdatesEnabled(false)
@@ -91,6 +97,12 @@ function Menu:init()
 			name = "Norma2D",
 			role = "Planet Sprites"
 		},
+		{
+			qr = nil,
+			url = "https://github.com/Schyzophrenic/Tanuk_CodeSequence",
+			name = "Schyzophrenic",
+			role = "Cheat Code\nSequence Class"
+		}
 	}
 
 	self.creditsScreenSprite = gfx.sprite.new(gfx.image.new(400, 240 * #self.credits))
@@ -131,6 +143,24 @@ function Menu:init()
 	if isFreeBuild then
 		table.remove(self.options, 2)
 	end
+end
+
+function Menu:addKawaiiCode()
+	return Tanuk_CodeSequence(
+		{
+			pd.kButtonUp,
+			pd.kButtonUp,
+			pd.kButtonDown,
+			pd.kButtonDown,
+			pd.kButtonLeft,
+			pd.kButtonRight,
+			pd.kButtonLeft,
+			pd.kButtonRight,
+			pd.kButtonB
+		}, function()
+			self.primeKonami = true
+		end
+	)
 end
 
 function Menu:highscoresScreen()
@@ -207,14 +237,17 @@ function Menu:createCreditsScreen()
 		--
 
 		local screen = self.creditsScreenSprite:getImage()
-		local qr = gfx.image.new(self.credits[i].qr)
 		local yOffset = (i - 1) * 240
 
 		gfx.pushContext(screen)
 
 		sectionBg:draw(0, yOffset)
 
-		qr:draw(20, yOffset + 20)
+		if self.credits[i].qr then
+			local qr = gfx.image.new(self.credits[i].qr)
+			qr:draw(20, yOffset + 20)
+		end
+
 		gfx.setImageDrawMode("fillWhite")
 		self.bigFont:drawText(self.credits[i].name, 200, yOffset + 20)
 		self.font:drawText(self.credits[i].role, 200, yOffset + 50)
@@ -227,14 +260,37 @@ function Menu:createCreditsScreen()
 end
 
 function Menu:update()
+	-- Konami Code Primed.
+	if self.primeKonami and pd.buttonJustPressed(pd.kButtonA) then
+		print("Konami Code Activated")
+		self.kawaii = not self.kawaii
+		self.primeKonami = false
+		self.konami:cleanup()
+		self.konami = self:addKawaiiCode()
+		self.legalText:setImage(gfx.image.new(self.kawaii and "assets/images/legally-kawaii.png" or
+		"assets/images/legally.png"))
+		self.legalText:moveTo(600, 32)
+
+		local legalTimer = pd.frameTimer.new(40, 600, 200, pd.easingFunctions.outElastic)
+		legalTimer.updateCallback = function()
+			self.legalText:moveTo(legalTimer.value, 20)
+		end
+
+		-- Update save data.
+		saveData.kawaii = self.kawaii
+		saveGameData()
+
+		return
+	end
+
 	if self.activeScreen == 2 then
-		if pd.buttonJustPressed("a") or pd.buttonJustPressed("b") or pd.buttonJustPressed("up") or pd.buttonJustPressed("down") or pd.buttonJustPressed("left") or pd.buttonJustPressed("right") then
+		if pd.buttonJustPressed(pd.kButtonA) or pd.buttonJustPressed(pd.kButtonB) or pd.buttonJustPressed(pd.kButtonUp) or pd.buttonJustPressed(pd.kButtonDown) or pd.buttonJustPressed(pd.kButtonLeft) or pd.buttonJustPressed(pd.kButtonRight) then
 			self:removeHighscoreScreen()
 			return
 		end
 	end
 
-	if pd.buttonJustPressed("a") then
+	if pd.buttonJustPressed(pd.kButtonA) then
 		if self.activeScreen == 1 then
 			self.options[self.currentOption].action()
 		end
@@ -249,7 +305,7 @@ function Menu:update()
 		end
 	end
 
-	if pd.buttonIsPressed("b") then
+	if pd.buttonIsPressed(pd.kButtonB) then
 		if self.activeScreen == 2 then
 			self:removeHighscoreScreen()
 		end
@@ -259,7 +315,7 @@ function Menu:update()
 		end
 	end
 
-	if pd.buttonJustPressed("up") then
+	if pd.buttonJustPressed(pd.kButtonUp) then
 		if self.activeScreen == 1 then
 			self.currentOption = self.currentOption - 1
 			if self.currentOption < 1 then
@@ -277,7 +333,7 @@ function Menu:update()
 		end
 	end
 
-	if pd.buttonJustPressed("down") then
+	if pd.buttonJustPressed(pd.kButtonDown) then
 		if self.activeScreen == 1 then
 			self.currentOption = self.currentOption + 1
 			if self.currentOption > #self.options then

@@ -6,7 +6,7 @@ local disp <const> = pd.display
 local vec2 <const> = pd.geometry.vector2D.new
 local snd <const> = pd.sound
 
-function Game:init()
+function Game:init(kawaii)
 	-- A table to hold all the ball values.
 	self.ballValues = {
 		{
@@ -14,7 +14,7 @@ function Game:init()
 			value = 2,
 			radius = 10,
 			level = 1,
-			image = "assets/images/moon.png",
+			image = kawaii and "assets/images/moon-kawaii.png" or "assets/images/moon.png",
 			images = {}
 		},
 		{
@@ -22,7 +22,7 @@ function Game:init()
 			value = 4,
 			radius = 14,
 			level = 2,
-			image = "assets/images/mercury.png",
+			image = kawaii and "assets/images/mercury-kawaii.png" or "assets/images/mercury.png",
 			images = {}
 		},
 		{
@@ -30,7 +30,7 @@ function Game:init()
 			value = 8,
 			radius = 16,
 			level = 3,
-			image = "assets/images/mars.png",
+			image = kawaii and "assets/images/mars-kawaii.png" or "assets/images/mars.png",
 			images = {}
 		},
 		{
@@ -38,7 +38,7 @@ function Game:init()
 			value = 16,
 			radius = 18,
 			level = 4,
-			image = "assets/images/venus.png",
+			image = kawaii and "assets/images/venus-kawaii.png" or "assets/images/venus.png",
 			images = {}
 		},
 		{
@@ -46,7 +46,7 @@ function Game:init()
 			value = 32,
 			radius = 20,
 			level = 5,
-			image = "assets/images/earth.png",
+			image = kawaii and "assets/images/earth-kawaii.png" or "assets/images/earth.png",
 			images = {}
 		},
 		{
@@ -54,7 +54,7 @@ function Game:init()
 			value = 64,
 			radius = 22,
 			level = 6,
-			image = "assets/images/neptune.png",
+			image = kawaii and "assets/images/neptune-kawaii.png" or "assets/images/neptune.png",
 			images = {}
 		},
 		{
@@ -62,7 +62,7 @@ function Game:init()
 			value = 128,
 			radius = 26,
 			level = 7,
-			image = "assets/images/uranus.png",
+			image = kawaii and "assets/images/uranus-kawaii.png" or "assets/images/uranus.png",
 			images = {}
 		},
 		{
@@ -70,7 +70,7 @@ function Game:init()
 			value = 256,
 			radius = 30,
 			level = 8,
-			image = "assets/images/saturn.png",
+			image = kawaii and "assets/images/saturn-kawaii.png" or "assets/images/saturn.png",
 			images = {}
 		},
 		{
@@ -78,7 +78,7 @@ function Game:init()
 			value = 512,
 			radius = 34,
 			level = 9,
-			image = "assets/images/jupiter.png",
+			image = kawaii and "assets/images/jupiter-kawaii.png" or "assets/images/jupiter.png",
 			images = {}
 		},
 		{
@@ -86,7 +86,7 @@ function Game:init()
 			value = 1024,
 			radius = 40,
 			level = 10,
-			image = "assets/images/sun.png",
+			image = kawaii and "assets/images/sun-kawaii.png" or "assets/images/sun.png",
 			images = {}
 		},
 		{
@@ -94,7 +94,7 @@ function Game:init()
 			value = 2048,
 			radius = 48,
 			level = 11,
-			image = "assets/images/blackhole.png",
+			image = kawaii and "assets/images/blackhole-kawaii.png" or "assets/images/blackhole.png",
 			images = {}
 		}
 	}

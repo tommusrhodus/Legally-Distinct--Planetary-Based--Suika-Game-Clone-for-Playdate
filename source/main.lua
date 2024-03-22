@@ -9,6 +9,7 @@ import "CoreLibs/qrcode"
 import "CoreLibs/keyboard"
 import "external/SDF2D.lua"
 import "external/particles.lua"
+import "external/cheat-codes.lua"
 
 import "classes/class-ball.lua"
 import "classes/class-wall.lua"
@@ -40,6 +41,7 @@ function loadData()
 	-- If no data was found, insert placeholder data.
 	if nil == saveData then
 		saveData = {
+			kawaii = false,
 			audio = "all",
 			score = {
 				{
@@ -81,6 +83,12 @@ function loadData()
 		pd.datastore.write(saveData, "ldpbsgcfpd")
 	end
 
+	-- Backfill kawaii save data.
+	if not saveData.kawaii then
+		saveData.kawaii = false
+		pd.datastore.write(saveData, "ldpbsgcfpd")
+	end
+
 	return saveData
 end
 
@@ -95,10 +103,12 @@ function startGame()
 		sprite:remove()
 	end)
 
+	local kawaii = menu.kawaii
+
 	menu = nil
 	gfx.clear(gfx.kColorBlack)
 
-	game = Game()
+	game = Game(kawaii)
 	game:setGuiImage()
 	game.guiImage:add()
 end
