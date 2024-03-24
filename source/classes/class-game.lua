@@ -267,6 +267,7 @@ function Game:dropBall()
 
 	self.didCombo = false
 
+	self.playerPosition.x = math.floor(self.playerPosition.x + 0.5)
 	Ball(self.playerPosition, self.currentBall):add()
 
 	self.currentBall = self.nextBall
@@ -284,8 +285,6 @@ function Game:fixPlayerBounds()
 	if self.playerPosition.x < 160 + (self.currentBall.radius) then
 		self.playerPosition.x = 160 + (self.currentBall.radius)
 	end
-
-	self.playerPosition.x = math.floor(self.playerPosition.x)
 end
 
 function Game:gameOver(restart)
@@ -343,14 +342,15 @@ end
 
 function Game:draw()
 	-- Draw the current ball at the player position.
+	local roundedPlayerX = math.floor(self.playerPosition.x + 0.5)
 	Ball:draw(self.currentBall.radius, self.currentBall.level):drawCentered(
-		self.playerPosition.x,
+		roundedPlayerX,
 		self.positionTimer.value
 	)
 
 	gfx.setColor(gfx.kColorWhite)
 	gfx.setDitherPattern(0.8, gfx.image.kDitherTypeHorizontalLine)
-	gfx.drawLine(self.playerPosition.x, self.killZone, self.playerPosition.x, 240)
+	gfx.drawLine(roundedPlayerX, self.killZone, roundedPlayerX, 240)
 	gfx.setDitherPattern(0)
 end
 
