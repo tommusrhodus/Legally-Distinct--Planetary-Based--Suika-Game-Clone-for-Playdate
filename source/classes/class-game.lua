@@ -107,12 +107,13 @@ function Game:init(kawaii)
 	Wall(sw + 10, sh / 2, 10, sh / 2):add() -- right
 	Wall(sw / 2, sh + 10, sw / 2, 10):add() -- bottom
 
-	self.positionTimer = pd.frameTimer.new(15, 0, 15, playdate.easingFunctions.outElastic)
+	self.positionTimer = pd.frameTimer.new(26, 0, 15, playdate.easingFunctions.outElastic)
 	self.positionTimer.discardOnCompletion = false
 
 	self.playerPosition = vec2(280, 15)
 	self.nextBall = self:getBall()
 	self.currentBall = self:getBall()
+	self.currentBallImage = nil
 
 	self.totalScore = 0
 	self.combo = 0
@@ -236,7 +237,7 @@ function Game:getGuiImage()
 	gfx.setColor(gfx.kColorWhite)
 	gfx.setDitherPattern(0.95)
 	gfx.fillCircleAtPoint(80, 60, 42)
-	Ball:draw(self.nextBall.radius, self.nextBall.level):drawCentered(80, 60)
+	Ball:getImage(self.nextBall.radius, self.nextBall.level):drawCentered(80, 60)
 
 	-- Draw exclusion zone at top of play area.
 	gfx.fillRect(160, 0, 240, self.killZone)
@@ -271,6 +272,7 @@ function Game:dropBall()
 
 	self.currentBall = self.nextBall
 	self.nextBall = self:getBall()
+	self.currentBallImage = Ball:getImage(self.currentBall.radius, self.currentBall.level)
 	self:setGuiImage()
 end
 
@@ -284,8 +286,6 @@ function Game:fixPlayerBounds()
 	if self.playerPosition.x < 160 + (self.currentBall.radius) then
 		self.playerPosition.x = 160 + (self.currentBall.radius)
 	end
-
-	self.playerPosition.x = math.floor(self.playerPosition.x)
 end
 
 function Game:gameOver(restart)
@@ -342,10 +342,14 @@ function Game:showGameOverModal()
 end
 
 function Game:draw()
+	if nil == self.currentBallImage then
+		self.currentBallImage = Ball:getImage(self.currentBall.radius, self.currentBall.level)
+	end
+
 	-- Draw the current ball at the player position.
-	Ball:draw(self.currentBall.radius, self.currentBall.level):drawCentered(
-		self.playerPosition.x,
-		self.positionTimer.value
+	self.currentBallImage:draw(
+		self.playerPosition.x - self.currentBall.radius,
+		self.positionTimer.value - self.currentBall.radius
 	)
 
 	gfx.setColor(gfx.kColorWhite)
@@ -420,7 +424,7 @@ function Game:update()
 		end
 	end)
 
-	if self.ticks == 4 then
+	if self.ticks == 3 then
 		self.ticks = 0
 	end
 end

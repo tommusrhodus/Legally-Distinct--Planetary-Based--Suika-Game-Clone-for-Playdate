@@ -17,16 +17,6 @@ function Particle:init(x, y)
 	self.colour = playdate.graphics.kColorBlack
 	self.bounds = { 0, 0, 0, 0 }
 	self.mode = 0
-	if self.type == 2 then -- polys
-		self.points = { 3, 3 }
-		self.angular = { 0, 0 }
-		self.rotation = { 0, 359 }
-	elseif self.type == 3 then -- images
-		self.angular = { 0, 0 }
-		self.image = playdate.graphics.image.new(1, 1)
-		self.table = nil
-		self.rotation = { 0, 359 }
-	end
 
 	particles[#particles + 1] = self
 end
@@ -185,62 +175,6 @@ local function decay(partlist, decay)
 		local particle = partlist[part]
 		if particle.size <= 0 then
 			table.remove(partlist, part)
-		end
-	end
-
-	return partlist
-end
-
-local function disappear(partlist)
-	for part = 1, #partlist, 1 do
-		local particle = partlist[part]
-		particle.lifespan -= .1
-	end
-	for part = #partlist, 1, -1 do
-		local particle = partlist[part]
-		if particle.lifespan <= 0 then
-			table.remove(partlist, part)
-		end
-	end
-
-	return partlist
-end
-
-local function loop(partlist, bounds)
-	if bounds[3] > bounds[1] and bounds[4] > bounds[2] then
-		local xDif, yDif = bounds[3] - bounds[1], bounds[4] - bounds[2]
-		for part = 1, #partlist, 1 do
-			local particle = partlist[part]
-			if particle.x > bounds[3] then
-				particle.x -= xDif
-			elseif particle.x < bounds[1] then
-				particle.x += xDif
-			end
-			if particle.y > bounds[4] then
-				particle.y -= yDif
-			elseif particle.y < bounds[2] then
-				particle.y += yDif
-			end
-		end
-	end
-
-	return partlist
-end
-
-local function stay(partlist, bounds)
-	if bounds[3] > bounds[1] and bounds[4] > bounds[2] then
-		local xDif, yDif = bounds[3] - bounds[1], bounds[4] - bounds[2]
-		for part = #partlist, 1, -1 do
-			local particle = partlist[part]
-			if particle.x > bounds[3] then
-				table.remove(partlist, part)
-			elseif particle.x < bounds[1] then
-				table.remove(partlist, part)
-			elseif particle.y > bounds[4] then
-				table.remove(partlist, part)
-			elseif particle.y < bounds[2] then
-				table.remove(partlist, part)
-			end
 		end
 	end
 

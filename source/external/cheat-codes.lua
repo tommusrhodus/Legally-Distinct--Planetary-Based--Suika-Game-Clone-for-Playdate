@@ -26,7 +26,7 @@ function Tanuk_CodeSequence:init(sequence, callbackReward, isAllowMultipleCalls)
     self.reward = callbackReward
     self.isAllowMultipleCalls = isAllowMultipleCalls or false
     self.sequenceIndex = 1
-    self.timerInput = pd.timer.new(750, function() self.sequenceIndex = 1 end)
+    self.timerInput = pd.frameTimer.new(25, function() self.sequenceIndex = 1 end)
     self.timerInput.repeats = true
     self:add()
 end
