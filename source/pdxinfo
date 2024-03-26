@@ -4,5 +4,5 @@ description=A simple clone of Suika Game, but it uses planets instead of fruit, 
 bundleID=com.tommusrhodus.ldpbsgcfp
 imagePath=SystemAssets
 launchSoundPath=assets/sounds/launch.wav
-version=0.1.2
-buildNumber=10003
+version=0.1.4
+buildNumber=10005

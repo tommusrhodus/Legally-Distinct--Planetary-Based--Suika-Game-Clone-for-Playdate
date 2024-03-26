@@ -12,10 +12,10 @@ function Ball:init(pos, currentBall)
 	self.position = pos
 	self.velocity = vec2(0.1, 4)
 	self.radius = currentBall.radius
-	self:setImage(self:draw(currentBall.radius, currentBall.level))
+	self:setImage(self:getImage(currentBall.radius, currentBall.level))
 	local w, h = self:getSize()
 	self:setCollideRect(-2, -2, w + 4, h + 4)
-	self:moveTo(self.position:unpack())
+	self:moveTo(self.position.x, self.position.y)
 	self.f = sdCircle
 	self:setUpdatesEnabled(false)
 
@@ -24,9 +24,11 @@ function Ball:init(pos, currentBall)
 
 	self.ticks = 0
 	self.activeBall = true
-	self.group = math.random(1, 4)
+	self.group = math.random(1, 3)
 
 	self.killer = nil
+
+	self.collisionBottom = false
 end
 
 function Ball:showToast(text, duration)
@@ -43,7 +45,7 @@ function Ball:showToast(text, duration)
 	end
 end
 
-function Ball:draw(radius, level)
+function Ball:getImage(radius, level)
 	if game.ballValues[level].image then
 		local img = gfx.image.new(game.ballValues[level].image)
 		local im = gfx.image.new(2 * radius, 2 * radius)
@@ -81,7 +83,7 @@ function Ball:levelUp()
 	self:unfreeze()
 	self.level += 1
 
-	local p = ParticleCircle(self.position:unpack())
+	local p = ParticleCircle(self.position.x, self.position.y)
 	p:setColor(gfx.kColorWhite)
 	p:setSize(5, 6)
 	p:setMode(Particles.modes.DECAY)
@@ -100,7 +102,7 @@ function Ball:levelUp()
 	local ballValues = game.ballValues[self.level]
 	self.value = ballValues.value
 	self.radius = ballValues.radius
-	self:setImage(self:draw(self.radius, self.level))
+	self:setImage(self:getImage(self.radius, self.level))
 	local w, h = self:getSize()
 	self:setCollideRect(-2, -2, w + 4, h + 4)
 
@@ -141,20 +143,21 @@ function Ball:update()
 		if self.velocity:magnitude() > 1 then
 			self:unfreeze()
 		else
-			self.velocity.y = 0.3
+			self.velocity.y = 0.5
 			return
 		end
 	end
 
 	if self.velocity:magnitude() < 0.4 or math.abs(self.velocity.y) < 0.1 then
 		self.stoodStillTick = self.stoodStillTick + 1
-		if self.stoodStillTick > 20 then
+		if self.stoodStillTick > 15 then
 			self:freeze()
 		end
 	end
 
+
 	local _, _, collisions, numberOfCollisions = self:checkCollisions(self.x, self.y)
-	local collisionBottom = false
+	self.collisionBottom = false
 
 	for i = 1, numberOfCollisions do
 		local collisionDistance = collisions[i].other:distance(self.position)
@@ -199,7 +202,7 @@ function Ball:update()
 
 			-- Was this collision on the bottom?
 			if normal.y == 1 then
-				collisionBottom = true
+				self.collisionBottom = true
 			end
 
 			-- Remove the collision from the list.
@@ -207,8 +210,9 @@ function Ball:update()
 		end
 	end
 
+
 	-- Add gravity.
-	if not collisionBottom then
+	if not self.collisionBottom then
 		self.velocity.y = self.velocity.y + 0.3
 	end
 
@@ -216,23 +220,21 @@ function Ball:update()
 	self.velocity = self.velocity * 0.99
 
 	self.position = self.position + self.velocity
-	self:moveTo(self.position:unpack())
 
 	-- Don't let the ball go out of bounds.
 	if self.position.x > 400 - self.radius then
 		self.position.x = 400 - self.radius
-		self:moveTo(self.position:unpack())
 	end
 
 	if self.position.x < 160 + self.radius then
 		self.position.x = 160 + self.radius
-		self:moveTo(self.position:unpack())
 	end
 
-	if self.position.y > 245 - self.radius then
+	if self.position.y > 240 - self.radius then
 		self.position.y = 240 - self.radius
-		self:moveTo(self.position:unpack())
 	end
+
+	self:moveTo(self.position.x, self.position.y)
 end
 
 -- to enable multi-collision resolution

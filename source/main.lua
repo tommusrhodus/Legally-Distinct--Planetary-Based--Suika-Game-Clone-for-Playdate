@@ -2,7 +2,6 @@ import "CoreLibs/object"
 import "CoreLibs/graphics"
 import "CoreLibs/animation"
 import "CoreLibs/sprites"
-import "CoreLibs/timer"
 import "CoreLibs/frameTimer"
 import "CoreLibs/easing"
 import "CoreLibs/qrcode"
@@ -25,7 +24,7 @@ local disp <const> = pd.display
 isFreeBuild = false
 
 -- Setup game constants.
-disp.setRefreshRate(30)
+disp.setRefreshRate(26)
 gfx.clear(gfx.kColorBlack)
 gfx.setBackgroundColor(gfx.kColorBlack)
 pd.setMenuImage(gfx.image.new("assets/images/menu-image.png"))
@@ -139,7 +138,6 @@ menu = Menu()
 function playdate.update()
 	gfx.sprite.update()
 	pd.frameTimer.updateTimers()
-	pd.timer.updateTimers()
 
 	if game then
 		game:update()
