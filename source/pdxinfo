@@ -1,8 +1,8 @@
-name=Legally Distinct, Planetary Based, Suika Game Clone for Playdate
+name=Legally Distinct, Planetary Based, Suika Game Clone for Playdate (Free)
 author=TommusRhodus
 description=A simple clone of Suika Game, but it uses planets instead of fruit, so it's definitely different.
 bundleID=com.tommusrhodus.ldpbsgcfp
 imagePath=SystemAssets
 launchSoundPath=assets/sounds/launch.wav
-version=0.1.4
-buildNumber=10005
+version=0.1.5
+buildNumber=00006

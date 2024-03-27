@@ -348,7 +348,7 @@ function Game:draw()
 
 	-- Draw the current ball at the player position.
 	self.currentBallImage:draw(
-		self.playerPosition.x - self.currentBall.radius,
+		math.floor(self.playerPosition.x - self.currentBall.radius + 0.5),
 		self.positionTimer.value - self.currentBall.radius
 	)
 

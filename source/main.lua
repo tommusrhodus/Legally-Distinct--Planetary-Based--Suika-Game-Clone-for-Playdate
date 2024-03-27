@@ -3,6 +3,7 @@ import "CoreLibs/graphics"
 import "CoreLibs/animation"
 import "CoreLibs/sprites"
 import "CoreLibs/frameTimer"
+import "CoreLibs/timer"
 import "CoreLibs/easing"
 import "CoreLibs/qrcode"
 import "CoreLibs/keyboard"
@@ -21,7 +22,7 @@ local gfx <const> = pd.graphics
 local disp <const> = pd.display
 
 -- Is this the free build or not?
-isFreeBuild = false
+isFreeBuild = true
 
 -- Setup game constants.
 disp.setRefreshRate(26)
@@ -102,6 +103,7 @@ function startGame()
 		sprite:remove()
 	end)
 
+	menu = Menu()
 	local kawaii = menu.kawaii
 
 	menu = nil
@@ -138,6 +140,7 @@ menu = Menu()
 function playdate.update()
 	gfx.sprite.update()
 	pd.frameTimer.updateTimers()
+	pd.timer.updateTimers()
 
 	if game then
 		game:update()
