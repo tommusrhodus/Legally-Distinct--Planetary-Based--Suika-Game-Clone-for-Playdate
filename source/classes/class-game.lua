@@ -293,7 +293,7 @@ function Game:gameOver(restart)
 	gfx.sprite.performOnAllSprites(function(sprite)
 		sprite:setUpdatesEnabled(false)
 
-		if nil == sprite.killer or not sprite.killer then
+		if sprite ~= self.guiImage and not sprite.killer then
 			sprite:setStencilPattern({ 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00 })
 		end
 	end)
