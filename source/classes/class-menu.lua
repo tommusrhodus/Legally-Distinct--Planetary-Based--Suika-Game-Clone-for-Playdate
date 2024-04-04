@@ -62,6 +62,12 @@ function Menu:init()
 
 	self.credits = {
 		{
+			qr   = nil,
+			url  = nil,
+			name = "Thank You!",
+			role = "For Playing!\n\nYou even found my\nhidden credit!"
+		},
+		{
 			qr   = "assets/images/TommusRhodus.png",
 			url  = "https://tomrhodes.blog/",
 			name = "TommusRhodus",
@@ -262,13 +268,12 @@ end
 function Menu:update()
 	-- Konami Code Primed.
 	if self.primeKonami and pd.buttonJustPressed(pd.kButtonA) then
-		print("Konami Code Activated")
 		self.kawaii = not self.kawaii
 		self.primeKonami = false
 		self.konami:cleanup()
 		self.konami = self:addKawaiiCode()
 		self.legalText:setImage(gfx.image.new(self.kawaii and "assets/images/legally-kawaii.png" or
-		"assets/images/legally.png"))
+			"assets/images/legally.png"))
 		self.legalText:moveTo(600, 32)
 
 		local legalTimer = pd.frameTimer.new(40, 600, 200, pd.easingFunctions.outElastic)

@@ -1,18 +1,15 @@
 import "CoreLibs/object"
 import "CoreLibs/graphics"
-import "CoreLibs/animation"
 import "CoreLibs/sprites"
 import "CoreLibs/frameTimer"
 import "CoreLibs/timer"
 import "CoreLibs/easing"
 import "CoreLibs/qrcode"
 import "CoreLibs/keyboard"
-import "external/SDF2D.lua"
 import "external/particles.lua"
 import "external/cheat-codes.lua"
 
 import "classes/class-ball.lua"
-import "classes/class-wall.lua"
 import "classes/class-game.lua"
 import "classes/class-menu.lua"
 import "classes/class-modal.lua"
@@ -25,7 +22,7 @@ local disp <const> = pd.display
 isFreeBuild = true
 
 -- Setup game constants.
-disp.setRefreshRate(26)
+disp.setRefreshRate(28)
 gfx.clear(gfx.kColorBlack)
 gfx.setBackgroundColor(gfx.kColorBlack)
 pd.setMenuImage(gfx.image.new("assets/images/menu-image.png"))
@@ -64,7 +61,7 @@ function loadData()
 			combo = {
 				{
 					name = "TommusRhodus",
-					value = 40
+					value = 30
 				},
 				{
 					name = "TommusRhodus",
@@ -98,18 +95,19 @@ function saveGameData()
 	pd.datastore.write(saveData, "ldpbsgcfpd")
 end
 
+menu = Menu()
+
 function startGame()
 	gfx.sprite.performOnAllSprites(function(sprite)
 		sprite:remove()
 	end)
 
-	menu = Menu()
-	local kawaii = menu.kawaii
-
 	menu = nil
 	gfx.clear(gfx.kColorBlack)
 
-	game = Game(kawaii)
+	local data = loadData()
+
+	game = Game(data.kawaii)
 	game:setGuiImage()
 	game.guiImage:add()
 end
@@ -135,12 +133,9 @@ function endGame()
 	menu = Menu()
 end
 
-menu = Menu()
-
-function playdate.update()
+function pd.update()
 	gfx.sprite.update()
 	pd.frameTimer.updateTimers()
-	pd.timer.updateTimers()
 
 	if game then
 		game:update()
@@ -149,6 +144,4 @@ function playdate.update()
 	if menu then
 		menu:update()
 	end
-
-	Particles.update()
 end
