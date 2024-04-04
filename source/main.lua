@@ -19,7 +19,7 @@ local gfx <const> = pd.graphics
 local disp <const> = pd.display
 
 -- Is this the free build or not?
-isFreeBuild = false
+isFreeBuild = true
 
 -- Setup game constants.
 disp.setRefreshRate(28)
