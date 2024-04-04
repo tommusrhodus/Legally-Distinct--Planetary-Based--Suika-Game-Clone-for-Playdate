@@ -2,9 +2,9 @@ class('Game').extends()
 
 local pd <const> = playdate
 local gfx <const> = pd.graphics
-local disp <const> = pd.display
 local vec2 <const> = pd.geometry.vector2D.new
 local snd <const> = pd.sound
+local spr <const> = gfx.sprite
 
 function Game:init(kawaii)
 	-- A table to hold all the ball values.
@@ -101,12 +101,6 @@ function Game:init(kawaii)
 
 	self.ticks = 0
 
-	-- Create walls to hold the ball in the screen.
-	local sw, sh = disp.getSize()
-	Wall(0, sh / 2, 160, sh / 2):add()   -- left
-	Wall(sw + 10, sh / 2, 10, sh / 2):add() -- right
-	Wall(sw / 2, sh + 10, sw / 2, 10):add() -- bottom
-
 	self.positionTimer = pd.frameTimer.new(26, 0, 15, playdate.easingFunctions.outElastic)
 	self.positionTimer.discardOnCompletion = false
 
@@ -201,7 +195,7 @@ end
 function Game:setGuiImage()
 	if nil == self.guiImage then
 		local image = self:getGuiImage()
-		self.guiImage = gfx.sprite.new(image)
+		self.guiImage = spr.new(image)
 		self.guiImage:setUpdatesEnabled(false)
 		self.guiImage:moveTo(0, 0)
 		self.guiImage:setCenter(0, 0)
@@ -289,18 +283,20 @@ function Game:fixPlayerBounds()
 end
 
 function Game:gameOver(restart)
-	-- get all sprites and remove them.
-	gfx.sprite.performOnAllSprites(function(sprite)
-		sprite:setUpdatesEnabled(false)
-
-		if nil == sprite.killer or not sprite.killer then
-			sprite:setStencilPattern({ 0xff, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff, 0x00 })
+	-- Blank out all sprites.
+	spr.performOnAllSprites(function(sprite)
+		printTable(sprite)
+		if sprite.killer then
+			return
 		end
+
+		sprite:setStencilPattern({ 0xff, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00 })
+		sprite:setUpdatesEnabled(false)
 	end)
 
 	if restart then
 		-- get all sprites and remove them.
-		gfx.sprite.performOnAllSprites(function(sprite)
+		spr.performOnAllSprites(function(sprite)
 			sprite:remove()
 		end)
 
@@ -318,10 +314,6 @@ function Game:showGameOverModal()
 	if nil == self.gameOverModal then
 		self.gameOverModal = Modal()
 	end
-
-	gfx.sprite.performOnAllSprites(function(sprite)
-		sprite:setUpdatesEnabled(false)
-	end)
 
 	local url = "https://tomrhodes.blog/ldpbsgcfpd/?score=" .. self.totalScore .. "&combo=" .. self.highestCombo
 
@@ -401,12 +393,8 @@ function Game:update()
 
 	self:draw()
 
-	if pd.isSimulator then
-		playdate.drawFPS(0, 0)
-	end
-
 	-- Update balls.
-	gfx.sprite.performOnAllSprites(function(sprite)
+	spr.performOnAllSprites(function(sprite)
 		-- Only run this on balls.
 		if sprite.className ~= "Ball" then
 			return
@@ -424,7 +412,7 @@ function Game:update()
 		end
 	end)
 
-	if self.ticks == 3 then
+	if self.ticks == 2 then
 		self.ticks = 0
 	end
 end

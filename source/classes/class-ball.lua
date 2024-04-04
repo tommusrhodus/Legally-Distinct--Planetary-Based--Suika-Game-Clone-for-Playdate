@@ -13,22 +13,37 @@ function Ball:init(pos, currentBall)
 	self.velocity = vec2(0.1, 4)
 	self.radius = currentBall.radius
 	self:setImage(self:getImage(currentBall.radius, currentBall.level))
-	local w, h = self:getSize()
-	self:setCollideRect(-2, -2, w + 4, h + 4)
-	self:moveTo(self.position.x, self.position.y)
-	self.f = sdCircle
+	self:setCollideRect(-2, -2, (self.radius + 2) * 2, (self.radius + 2) * 2)
 	self:setUpdatesEnabled(false)
 
 	self.stoodStill = false
 	self.stoodStillTick = 0
 
-	self.ticks = 0
 	self.activeBall = true
-	self.group = math.random(1, 3)
+	self.group = math.random(1, 2)
 
 	self.killer = nil
 
 	self.collisionBottom = false
+end
+
+-- p = self position, o = other position, params = other radius
+function Ball:calcNormalizedGradient(p, o)
+	-- Calculate the vector from circle1 center to circle2 center
+	local dx = o.x - p.x
+	local dy = o.y - p.y
+
+	-- Calculate the distance between the centers of the circles
+	local distanceSquared = dx * dx + dy * dy
+	local distance = math.sqrt(distanceSquared)
+	local normalX = dx / distance
+	local normalY = dy / distance
+	return vec2(normalX * -1, normalY * -1)
+end
+
+-- Circle (https://www.shadertoy.com/view/3ltSW2)
+function Ball:sdCircle(p, r)
+	return p:magnitude() - r
 end
 
 function Ball:showToast(text, duration)
@@ -59,7 +74,7 @@ function Ball:getImage(radius, level)
 end
 
 function Ball:distance(p)
-	return sdCircle(self.position - p, self.radius)
+	return self:sdCircle(self.position - p, self.radius)
 end
 
 function Ball:destroy()
@@ -135,8 +150,6 @@ end
 -- We'll use the bump.lua based AABB collision detection that Playdate SDK provides as
 -- a first pass efficient detector, then pass to SDF distances when sprites overlap
 function Ball:update()
-	self.ticks += 1
-
 	-- Don't check for collisions if the ball is standing still.
 	-- Reset this flag if the ball starts moving again.
 	if self.stoodStill then
@@ -155,61 +168,55 @@ function Ball:update()
 		end
 	end
 
-
-	local _, _, collisions, numberOfCollisions = self:checkCollisions(self.x, self.y)
+	local realCollisions = 0
+	local _, _, collisions, numberOfCollisions = self:checkCollisions(self.x + self.velocity.x, self.y + self.velocity.y)
 	self.collisionBottom = false
 
 	for i = 1, numberOfCollisions do
-		local collisionDistance = collisions[i].other:distance(self.position)
+		local normal = nil
 
-		if collisionDistance <= self.radius then
-			-- Play a click sound.
-			if self.velocity:magnitude() > 0.8 and not game.click:isPlaying() then
-				game.click:play()
-			end
+		if collisions[i].other.className == "Ball" then
+			local collisionDistance = collisions[i].other:distance(self.position)
 
-			local args = collisions[i].other.className == "Wall" and
-				{ vec2(collisions[i].other.a, collisions[i].other.b) } or
-				{ collisions[i].other.radius }
+			if collisionDistance <= self.radius then
+				realCollisions += 1
 
-			local normal = calcNormalizedGradient(
-				self.position,
-				collisions[i].other.f,
-				collisions[i].other.position,
-				args
-			)
+				normal = self:calcNormalizedGradient(
+					self.position,
+					collisions[i].other.position
+				)
 
-			if collisions[i].other.stoodStill and self.activeBall then
-				collisions[i].other.velocity = -(self.velocity - self.velocity:projectedAlong(normal) * 1.3)
-			end
+				if collisions[i].other.stoodStill and self.activeBall then
+					collisions[i].other.velocity = -(self.velocity - self.velocity:projectedAlong(normal) * 1.3)
+				end
 
-			-- Update the ball position.
-			self.position = self.position + normal * (self.radius - collisionDistance)
+				-- Move the ball out of the collision.
+				self.position = self.position + normal * (self.radius - collisionDistance)
 
-			-- Update the ball velocity.
-			self.velocity = (self.velocity - self.velocity:projectedAlong(normal) * 2) * 0.65
+				-- Update the ball velocity.
+				self.velocity = (self.velocity - self.velocity:projectedAlong(normal) * 2) * 0.65
 
-			-- Handle collisions of the same value.
-			if collisions[i].other.level == self.level then
-				if self.ticks > collisions[i].other.ticks then
-					collisions[i].other:destroy()
-					self:levelUp()
-				else
-					self:destroy()
-					collisions[i].other:levelUp()
+				-- Handle collisions of the same value.
+				if collisions[i].other.level == self.level then
+					if self.position.y < collisions[i].other.position.y then
+						collisions[i].other:destroy()
+						self:levelUp()
+					else
+						self:destroy()
+						collisions[i].other:levelUp()
+					end
 				end
 			end
-
-			-- Was this collision on the bottom?
-			if normal.y == 1 then
-				self.collisionBottom = true
-			end
-
-			-- Remove the collision from the list.
-			collisions[i] = nil
 		end
-	end
 
+		-- Was this collision on the bottom?
+		if nil ~= normal and normal.y == 1 then
+			self.collisionBottom = true
+		end
+
+		-- Remove the collision from the list.
+		collisions[i] = nil
+	end
 
 	-- Add gravity.
 	if not self.collisionBottom then
@@ -223,15 +230,27 @@ function Ball:update()
 
 	-- Don't let the ball go out of bounds.
 	if self.position.x > 400 - self.radius then
+		self.velocity.x = -self.velocity.x * 0.65
 		self.position.x = 400 - self.radius
+		realCollisions += 1
 	end
 
 	if self.position.x < 160 + self.radius then
+		self.velocity.x = -self.velocity.x * 0.65
 		self.position.x = 160 + self.radius
+		realCollisions += 1
 	end
 
 	if self.position.y > 240 - self.radius then
+		self.velocity.y = -self.velocity.y * 0.65
 		self.position.y = 240 - self.radius
+		realCollisions += 1
+		self.velocity.x = self.velocity.x * 0.95
+	end
+
+	-- Play a click sound.
+	if realCollisions > 0 and math.abs(self.velocity.y) > 0.8 and not game.click:isPlaying() then
+		game.click:play()
 	end
 
 	self:moveTo(self.position.x, self.position.y)

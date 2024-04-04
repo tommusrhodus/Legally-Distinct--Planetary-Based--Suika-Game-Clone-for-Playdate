@@ -7,12 +7,10 @@ import "CoreLibs/timer"
 import "CoreLibs/easing"
 import "CoreLibs/qrcode"
 import "CoreLibs/keyboard"
-import "external/SDF2D.lua"
 import "external/particles.lua"
 import "external/cheat-codes.lua"
 
 import "classes/class-ball.lua"
-import "classes/class-wall.lua"
 import "classes/class-game.lua"
 import "classes/class-menu.lua"
 import "classes/class-modal.lua"
@@ -25,7 +23,7 @@ local disp <const> = pd.display
 isFreeBuild = true
 
 -- Setup game constants.
-disp.setRefreshRate(26)
+disp.setRefreshRate(30)
 gfx.clear(gfx.kColorBlack)
 gfx.setBackgroundColor(gfx.kColorBlack)
 pd.setMenuImage(gfx.image.new("assets/images/menu-image.png"))
@@ -137,10 +135,9 @@ end
 
 menu = Menu()
 
-function playdate.update()
+function pd.update()
 	gfx.sprite.update()
 	pd.frameTimer.updateTimers()
-	pd.timer.updateTimers()
 
 	if game then
 		game:update()
