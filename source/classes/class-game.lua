@@ -129,8 +129,35 @@ function Game:init(kawaii)
 
 	self.killZone = 40
 	self.gameOverModal = nil
+	self.gameOverBackground = spr.new(gfx.image.new("assets/images/menu-bg.png"))
+	self.gameOverBackground:setUpdatesEnabled(false)
+	self.gameOverBackground:moveTo(0, 0)
+	self.gameOverBackground:setCenter(0, 0)
+	self.gameOverBackground:setZIndex(-1000)
 
 	self.shareScoreQR = nil
+	self.guideLine = self:getGuideLine()
+
+	self.gameBg = gfx.image.new("assets/images/game-bg.png")
+
+	spr.setBackgroundDrawingCallback(function()
+		local bgX = self.playerPosition.x - 160
+		local mappedX = (bgX - 0) * (25 - (-25)) / (240 - 0) + (-25)
+		self.gameBg:draw(mappedX, 0)
+	end)
+end
+
+function Game:getGuideLine()
+	local image = gfx.image.new(1, 240 - self.killZone)
+
+	gfx.pushContext(image)
+	gfx.setColor(gfx.kColorWhite)
+	gfx.setDitherPattern(0.8, gfx.image.kDitherTypeHorizontalLine)
+	gfx.drawLine(0, 0, 0, 240 - self.killZone)
+	gfx.setDitherPattern(0)
+	gfx.popContext()
+
+	return image
 end
 
 function Game:setDefaultAudio()
@@ -206,12 +233,8 @@ end
 
 function Game:getGuiImage()
 	local gui = gfx.image.new(400, 240)
-	local space = gfx.image.new("assets/images/space.png")
-	local guibg = gfx.image.new("assets/images/gui.png")
 
 	gfx.pushContext(gui)
-
-	guibg:draw(0, 0)
 
 	gfx.setImageDrawMode("fillWhite")
 	self.font:drawTextAligned("NEXT PLANET", 80, 107, kTextAlignment.center)
@@ -223,9 +246,6 @@ function Game:getGuiImage()
 
 	self.font:drawTextAligned("COMBO\n" .. self.combo, 80, 155, kTextAlignment.center)
 	gfx.setImageDrawMode("copy")
-
-	-- Draw the space background.
-	space:draw(160, 0)
 
 	-- Draw the next ball at the top of the screen.
 	gfx.setColor(gfx.kColorWhite)
@@ -280,19 +300,22 @@ function Game:fixPlayerBounds()
 	if self.playerPosition.x < 160 + (self.currentBall.radius) then
 		self.playerPosition.x = 160 + (self.currentBall.radius)
 	end
+
+	-- Redraw the background.
+	spr.redrawBackground()
 end
 
 function Game:gameOver(restart)
-	-- Blank out all sprites.
+	-- Blank out all sprites apart from the killer.
 	spr.performOnAllSprites(function(sprite)
-		printTable(sprite)
 		if sprite.killer then
 			return
 		end
 
-		sprite:setStencilPattern({ 0xff, 0x00, 0xff, 0x00, 0x00, 0x00, 0xff, 0x00 })
-		sprite:setUpdatesEnabled(false)
+		sprite:remove()
 	end)
+
+	self.gameOverBackground:add()
 
 	if restart then
 		-- get all sprites and remove them.
@@ -334,31 +357,32 @@ function Game:showGameOverModal()
 end
 
 function Game:draw()
+	local radius = self.currentBall.radius
+	local playerX = self.playerPosition.x
+
 	if nil == self.currentBallImage then
-		self.currentBallImage = Ball:getImage(self.currentBall.radius, self.currentBall.level)
+		self.currentBallImage = Ball:getImage(radius, self.currentBall.level)
 	end
 
 	-- Draw the current ball at the player position.
 	self.currentBallImage:draw(
-		math.floor(self.playerPosition.x - self.currentBall.radius + 0.5),
-		self.positionTimer.value - self.currentBall.radius
+		math.floor(playerX - radius + 0.5),
+		self.positionTimer.value - radius
 	)
 
-	gfx.setColor(gfx.kColorWhite)
-	gfx.setDitherPattern(0.8, gfx.image.kDitherTypeHorizontalLine)
-	gfx.drawLine(self.playerPosition.x, self.killZone, self.playerPosition.x, 240)
-	gfx.setDitherPattern(0)
+	self.guideLine:draw(playerX, self.killZone)
 end
 
 function Game:update()
 	self.ticks += 1
+	Particles.update()
 
 	if nil ~= self.gameOverModal then
 		self.gameOverModal:update()
 
 		if not self.gameOverModal:isVisible() then
 			gfx.setImageDrawMode("fillWhite")
-			self.font:drawTextAligned('LOADING...', 200, 120, kTextAlignment.center)
+			self.font:drawTextAligned('GAME OVER\nLOADING HIGHSCORES...', 200, 110, kTextAlignment.center)
 			gfx.setImageDrawMode("copy")
 		end
 
@@ -368,9 +392,11 @@ function Game:update()
 	-- Crank input.
 	if not pd.isCrankDocked() then
 		local _, acceleratedChange = pd.getCrankChange()
-		self.playerPosition.x += acceleratedChange
 
-		self:fixPlayerBounds()
+		if acceleratedChange ~= 0 then
+			self.playerPosition.x += acceleratedChange
+			self:fixPlayerBounds()
+		end
 	end
 
 	-- Move the player with arrow keys.

@@ -1,6 +1,5 @@
 import "CoreLibs/object"
 import "CoreLibs/graphics"
-import "CoreLibs/animation"
 import "CoreLibs/sprites"
 import "CoreLibs/frameTimer"
 import "CoreLibs/timer"
@@ -20,10 +19,10 @@ local gfx <const> = pd.graphics
 local disp <const> = pd.display
 
 -- Is this the free build or not?
-isFreeBuild = true
+isFreeBuild = false
 
 -- Setup game constants.
-disp.setRefreshRate(30)
+disp.setRefreshRate(28)
 gfx.clear(gfx.kColorBlack)
 gfx.setBackgroundColor(gfx.kColorBlack)
 pd.setMenuImage(gfx.image.new("assets/images/menu-image.png"))
@@ -62,7 +61,7 @@ function loadData()
 			combo = {
 				{
 					name = "TommusRhodus",
-					value = 40
+					value = 30
 				},
 				{
 					name = "TommusRhodus",
@@ -96,18 +95,19 @@ function saveGameData()
 	pd.datastore.write(saveData, "ldpbsgcfpd")
 end
 
+menu = Menu()
+
 function startGame()
 	gfx.sprite.performOnAllSprites(function(sprite)
 		sprite:remove()
 	end)
 
-	menu = Menu()
-	local kawaii = menu.kawaii
-
 	menu = nil
 	gfx.clear(gfx.kColorBlack)
 
-	game = Game(kawaii)
+	local data = loadData()
+
+	game = Game(data.kawaii)
 	game:setGuiImage()
 	game.guiImage:add()
 end
@@ -133,8 +133,6 @@ function endGame()
 	menu = Menu()
 end
 
-menu = Menu()
-
 function pd.update()
 	gfx.sprite.update()
 	pd.frameTimer.updateTimers()
@@ -146,6 +144,4 @@ function pd.update()
 	if menu then
 		menu:update()
 	end
-
-	Particles.update()
 end

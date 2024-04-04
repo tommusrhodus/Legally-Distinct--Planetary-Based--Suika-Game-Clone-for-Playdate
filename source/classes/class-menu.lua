@@ -62,6 +62,12 @@ function Menu:init()
 
 	self.credits = {
 		{
+			qr   = nil,
+			url  = nil,
+			name = "Thank You!",
+			role = "For Playing!\n\nYou even found my\nhidden credit!"
+		},
+		{
 			qr   = "assets/images/TommusRhodus.png",
 			url  = "https://tomrhodes.blog/",
 			name = "TommusRhodus",

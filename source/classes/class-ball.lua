@@ -169,7 +169,7 @@ function Ball:update()
 	end
 
 	local realCollisions = 0
-	local _, _, collisions, numberOfCollisions = self:checkCollisions(self.x + self.velocity.x, self.y + self.velocity.y)
+	local _, _, collisions, numberOfCollisions = self:checkCollisions(self.x, self.y)
 	self.collisionBottom = false
 
 	for i = 1, numberOfCollisions do
@@ -187,18 +187,18 @@ function Ball:update()
 				)
 
 				if collisions[i].other.stoodStill and self.activeBall then
-					collisions[i].other.velocity = -(self.velocity - self.velocity:projectedAlong(normal) * 1.3)
+					collisions[i].other.velocity = -(self.velocity - self.velocity:projectedAlong(normal) * 1.45)
 				end
 
 				-- Move the ball out of the collision.
 				self.position = self.position + normal * (self.radius - collisionDistance)
 
 				-- Update the ball velocity.
-				self.velocity = (self.velocity - self.velocity:projectedAlong(normal) * 2) * 0.65
+				self.velocity = (self.velocity - self.velocity:projectedAlong(normal) * 1.45)
 
 				-- Handle collisions of the same value.
 				if collisions[i].other.level == self.level then
-					if self.position.y < collisions[i].other.position.y then
+					if self.position.y > collisions[i].other.position.y then
 						collisions[i].other:destroy()
 						self:levelUp()
 					else
