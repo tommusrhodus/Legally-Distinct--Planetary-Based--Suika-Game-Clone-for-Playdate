@@ -6,7 +6,6 @@ import "CoreLibs/timer"
 import "CoreLibs/easing"
 import "CoreLibs/qrcode"
 import "CoreLibs/keyboard"
-import "external/particles.lua"
 import "external/cheat-codes.lua"
 
 import "classes/class-ball.lua"
@@ -17,6 +16,7 @@ import "classes/class-modal.lua"
 local pd <const> = playdate
 local gfx <const> = pd.graphics
 local disp <const> = pd.display
+local spr <const> = gfx.sprite
 
 -- Is this the free build or not?
 isFreeBuild = true
@@ -98,7 +98,7 @@ end
 menu = Menu()
 
 function startGame()
-	gfx.sprite.performOnAllSprites(function(sprite)
+	spr.performOnAllSprites(function(sprite)
 		sprite:remove()
 	end)
 
@@ -113,7 +113,7 @@ function startGame()
 end
 
 function restartGame()
-	gfx.sprite.performOnAllSprites(function(sprite)
+	spr.performOnAllSprites(function(sprite)
 		sprite:remove()
 	end)
 
@@ -122,7 +122,7 @@ function restartGame()
 end
 
 function endGame()
-	gfx.sprite.performOnAllSprites(function(sprite)
+	spr.performOnAllSprites(function(sprite)
 		sprite:remove()
 	end)
 
@@ -134,7 +134,7 @@ function endGame()
 end
 
 function pd.update()
-	gfx.sprite.update()
+	spr.update()
 	pd.frameTimer.updateTimers()
 
 	if game then

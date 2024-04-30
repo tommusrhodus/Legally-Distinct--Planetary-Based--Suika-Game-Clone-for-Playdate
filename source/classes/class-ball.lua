@@ -1,55 +1,34 @@
 local pd <const> = playdate
 local gfx <const> = pd.graphics
-local vec2 = pd.geometry.vector2D.new
+local geo <const> = pd.geometry
+local vec2 <const> = geo.vector2D.new
+local sqrt <const> = math.sqrt
 
 class("Ball").extends(gfx.sprite)
 
-function Ball:init(pos, currentBall)
+function Ball:init(posX, posY, currentBall)
 	Ball.super.init(self)
 
 	self.value = currentBall.value
 	self.level = currentBall.level
-	self.position = pos
+	self.position = vec2(posX, posY)
 	self.velocity = vec2(0.1, 4)
 	self.radius = currentBall.radius
+
 	self:setImage(self:getImage(currentBall.radius, currentBall.level))
-	self:setCollideRect(-2, -2, (self.radius + 2) * 2, (self.radius + 2) * 2)
-	self:setUpdatesEnabled(false)
+	self:setCollideRect(0, 0, self.radius * 2, self.radius * 2)
 
 	self.stoodStill = false
 	self.stoodStillTick = 0
-
 	self.activeBall = true
-	self.group = math.random(1, 2)
-
 	self.killer = nil
-
-	self.collisionBottom = false
-end
-
--- p = self position, o = other position, params = other radius
-function Ball:calcNormalizedGradient(p, o)
-	-- Calculate the vector from circle1 center to circle2 center
-	local dx = o.x - p.x
-	local dy = o.y - p.y
-
-	-- Calculate the distance between the centers of the circles
-	local distanceSquared = dx * dx + dy * dy
-	local distance = math.sqrt(distanceSquared)
-	local normalX = dx / distance
-	local normalY = dy / distance
-	return vec2(normalX * -1, normalY * -1)
-end
-
--- Circle (https://www.shadertoy.com/view/3ltSW2)
-function Ball:sdCircle(p, r)
-	return p:magnitude() - r
 end
 
 function Ball:showToast(text, duration)
 	local t = pd.frameTimer.new(duration, 0, 16, pd.easingFunctions.outElastic)
-	t.updateCallback = function()
+	t.updateCallback = function(timer)
 		if not game then
+			timer:remove()
 			return
 		end
 
@@ -73,14 +52,6 @@ function Ball:getImage(radius, level)
 	end
 end
 
-function Ball:distance(p)
-	return self:sdCircle(self.position - p, self.radius)
-end
-
-function Ball:destroy()
-	self:remove()
-end
-
 function Ball:levelUp()
 	game.didCombo = true
 	game.combo += 1
@@ -98,19 +69,12 @@ function Ball:levelUp()
 	self:unfreeze()
 	self.level += 1
 
-	local p = ParticleCircle(self.position.x, self.position.y)
-	p:setColor(gfx.kColorWhite)
-	p:setSize(5, 6)
-	p:setMode(Particles.modes.DECAY)
-	p:setSpeed(4, 9)
-	p:add(15)
-
 	game:setGuiImage()
 	game.pop:play()
 
-	-- If we're reached the last ball, destroy self.
+	-- If we've reached the last ball, remove self.
 	if self.level > #game.ballValues then
-		self:destroy()
+		self:remove()
 		return
 	end
 
@@ -118,15 +82,16 @@ function Ball:levelUp()
 	self.value = ballValues.value
 	self.radius = ballValues.radius
 	self:setImage(self:getImage(self.radius, self.level))
-	local w, h = self:getSize()
-	self:setCollideRect(-2, -2, w + 4, h + 4)
+	self:setCollideRect(0, 0, self.radius * 2, self.radius * 2)
 
 	-- Unfreeze any balls that the levelled up ball is touching.
 	local _, _, collisions, numberOfCollisions = self:checkCollisions(self.x, self.y)
 
 	for i = 1, numberOfCollisions do
-		if collisions[i].other.className == "Ball" then
-			collisions[i].other:unfreeze()
+		local other = collisions[i].other
+
+		if other.className == "Ball" then
+			other:unfreeze()
 		end
 	end
 end
@@ -161,49 +126,58 @@ function Ball:update()
 		end
 	end
 
-	if self.velocity:magnitude() < 0.4 or math.abs(self.velocity.y) < 0.1 then
+	if self.velocity:magnitude() < 0.4 or (self.velocity.y < 0.1 and self.velocity.y > 0) then
 		self.stoodStillTick = self.stoodStillTick + 1
-		if self.stoodStillTick > 15 then
+		if self.stoodStillTick > 20 then
 			self:freeze()
 		end
 	end
 
 	local realCollisions = 0
 	local _, _, collisions, numberOfCollisions = self:checkCollisions(self.x, self.y)
-	self.collisionBottom = false
+	local collisionBottom = false
 
 	for i = 1, numberOfCollisions do
 		local normal = nil
+		local other = collisions[i].other
 
-		if collisions[i].other.className == "Ball" then
-			local collisionDistance = collisions[i].other:distance(self.position)
+		if other.className == "Ball" then
+			local collisionDistance = geo.distanceToPoint(
+				self.position.x,
+				self.position.y,
+				other.position.x,
+				other.position.y
+			)
 
-			if collisionDistance <= self.radius then
+			if collisionDistance - other.radius <= self.radius then
 				realCollisions += 1
 
-				normal = self:calcNormalizedGradient(
-					self.position,
-					collisions[i].other.position
-				)
+				-- Calculate the vector from circle1 center to circle2 center
+				local dx = other.position.x - self.position.x
+				local dy = other.position.y - self.position.y
 
-				if collisions[i].other.stoodStill and self.activeBall then
-					collisions[i].other.velocity = -(self.velocity - self.velocity:projectedAlong(normal) * 1.45)
+				normal = vec2(-dx / collisionDistance, -dy / collisionDistance)
+
+				local selfVelocity = self.velocity - self.velocity:projectedAlong(normal) * 1.25
+
+				if other.stoodStill and self.activeBall then
+					other.velocity = -(selfVelocity)
 				end
 
 				-- Move the ball out of the collision.
-				self.position = self.position + normal * (self.radius - collisionDistance)
+				self.position:addVector(normal * (self.radius - (collisionDistance - other.radius)))
 
 				-- Update the ball velocity.
-				self.velocity = (self.velocity - self.velocity:projectedAlong(normal) * 1.45)
+				self.velocity = selfVelocity
 
 				-- Handle collisions of the same value.
-				if collisions[i].other.level == self.level then
-					if self.position.y > collisions[i].other.position.y then
-						collisions[i].other:destroy()
+				if other.level == self.level then
+					if self.position.y > other.position.y then
+						other:remove()
 						self:levelUp()
 					else
-						self:destroy()
-						collisions[i].other:levelUp()
+						self:remove()
+						other:levelUp()
 					end
 				end
 			end
@@ -211,7 +185,7 @@ function Ball:update()
 
 		-- Was this collision on the bottom?
 		if nil ~= normal and normal.y == 1 then
-			self.collisionBottom = true
+			collisionBottom = true
 		end
 
 		-- Remove the collision from the list.
@@ -219,40 +193,42 @@ function Ball:update()
 	end
 
 	-- Add gravity.
-	if not self.collisionBottom then
+	if not collisionBottom then
 		self.velocity.y = self.velocity.y + 0.3
 	end
 
 	-- Add friction.
-	self.velocity = self.velocity * 0.99
+	self.velocity:scale(0.99)
 
-	self.position = self.position + self.velocity
+	-- Update the ball position.
+	self.position:addVector(self.velocity)
 
 	-- Don't let the ball go out of bounds.
 	if self.position.x > 400 - self.radius then
-		self.velocity.x = -self.velocity.x * 0.65
+		self.velocity.x = -self.velocity.x * 0.25
 		self.position.x = 400 - self.radius
 		realCollisions += 1
 	end
 
 	if self.position.x < 160 + self.radius then
-		self.velocity.x = -self.velocity.x * 0.65
+		self.velocity.x = -self.velocity.x * 0.25
 		self.position.x = 160 + self.radius
 		realCollisions += 1
 	end
 
 	if self.position.y > 240 - self.radius then
-		self.velocity.y = -self.velocity.y * 0.65
+		self.velocity.y = -self.velocity.y * 0.25
 		self.position.y = 240 - self.radius
 		realCollisions += 1
-		self.velocity.x = self.velocity.x * 0.95
+		self.velocity.x = self.velocity.x * 0.75
 	end
 
 	-- Play a click sound.
-	if realCollisions > 0 and math.abs(self.velocity.y) > 0.8 and not game.click:isPlaying() then
+	if realCollisions > 0 and (self.velocity.y > 0.8 or self.velocity.y < -0.8) and not game.click:isPlaying() then
 		game.click:play()
 	end
 
+	-- Finally, move the actual sprite.
 	self:moveTo(self.position.x, self.position.y)
 end
 

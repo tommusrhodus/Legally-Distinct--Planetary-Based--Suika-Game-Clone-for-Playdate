@@ -2,7 +2,6 @@ class('Game').extends()
 
 local pd <const> = playdate
 local gfx <const> = pd.graphics
-local vec2 <const> = pd.geometry.vector2D.new
 local snd <const> = pd.sound
 local spr <const> = gfx.sprite
 
@@ -99,12 +98,11 @@ function Game:init(kawaii)
 		}
 	}
 
-	self.ticks = 0
-
-	self.positionTimer = pd.frameTimer.new(26, 0, 15, playdate.easingFunctions.outElastic)
+	self.positionTimer = pd.frameTimer.new(26, 0, 15, pd.easingFunctions.outElastic)
 	self.positionTimer.discardOnCompletion = false
 
-	self.playerPosition = vec2(280, 15)
+	self.playerPositionX = 280
+	self.playerPositionY = 15
 	self.nextBall = self:getBall()
 	self.currentBall = self:getBall()
 	self.currentBallImage = nil
@@ -141,8 +139,8 @@ function Game:init(kawaii)
 	self.gameBg = gfx.image.new("assets/images/game-bg.png")
 
 	spr.setBackgroundDrawingCallback(function()
-		local bgX = self.playerPosition.x - 160
-		local mappedX = (bgX - 0) * (25 - (-25)) / (240 - 0) + (-25)
+		local bgX = self.playerPositionX - 160
+		local mappedX = (bgX * 50) / 240 - 25
 		self.gameBg:draw(mappedX, 0)
 	end)
 end
@@ -282,7 +280,7 @@ function Game:dropBall()
 
 	self.didCombo = false
 
-	Ball(self.playerPosition, self.currentBall):add()
+	Ball(self.playerPositionX, self.playerPositionY, self.currentBall):add()
 
 	self.currentBall = self.nextBall
 	self.nextBall = self:getBall()
@@ -292,13 +290,13 @@ end
 
 function Game:fixPlayerBounds()
 	-- Don't let the player go off the screen.
-	if self.playerPosition.x > 400 - (self.currentBall.radius) then
-		self.playerPosition.x = 400 - (self.currentBall.radius)
+	if self.playerPositionX > 400 - (self.currentBall.radius) then
+		self.playerPositionX = 400 - (self.currentBall.radius)
 	end
 
 	-- Don't let the player go off the screen.
-	if self.playerPosition.x < 160 + (self.currentBall.radius) then
-		self.playerPosition.x = 160 + (self.currentBall.radius)
+	if self.playerPositionX < 160 + (self.currentBall.radius) then
+		self.playerPositionX = 160 + (self.currentBall.radius)
 	end
 
 	-- Redraw the background.
@@ -358,7 +356,7 @@ end
 
 function Game:draw()
 	local radius = self.currentBall.radius
-	local playerX = self.playerPosition.x
+	local playerX = self.playerPositionX
 
 	if nil == self.currentBallImage then
 		self.currentBallImage = Ball:getImage(radius, self.currentBall.level)
@@ -374,9 +372,6 @@ function Game:draw()
 end
 
 function Game:update()
-	self.ticks += 1
-	Particles.update()
-
 	if nil ~= self.gameOverModal then
 		self.gameOverModal:update()
 
@@ -394,19 +389,19 @@ function Game:update()
 		local _, acceleratedChange = pd.getCrankChange()
 
 		if acceleratedChange ~= 0 then
-			self.playerPosition.x += acceleratedChange
+			self.playerPositionX += acceleratedChange
 			self:fixPlayerBounds()
 		end
 	end
 
 	-- Move the player with arrow keys.
 	if pd.buttonIsPressed("Left") then
-		self.playerPosition.x -= 3
+		self.playerPositionX -= 3
 		self:fixPlayerBounds()
 	end
 
 	if pd.buttonIsPressed("Right") then
-		self.playerPosition.x += 3
+		self.playerPositionX += 3
 		self:fixPlayerBounds()
 	end
 
@@ -418,27 +413,4 @@ function Game:update()
 	end
 
 	self:draw()
-
-	-- Update balls.
-	spr.performOnAllSprites(function(sprite)
-		-- Only run this on balls.
-		if sprite.className ~= "Ball" then
-			return
-		end
-
-		-- Update ball groups alternately.
-		if sprite.group == self.ticks then
-			sprite:update()
-			return
-		end
-
-		-- Update the active ball every frame.
-		if sprite.activeBall then
-			sprite:update()
-		end
-	end)
-
-	if self.ticks == 2 then
-		self.ticks = 0
-	end
 end

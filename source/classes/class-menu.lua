@@ -80,12 +80,6 @@ function Menu:init()
 			role = "Soundtrack"
 		},
 		{
-			qr   = "assets/images/PossiblyAxolotl.png",
-			url  = "https://github.com/PossiblyAxolotl/pdParticles",
-			name = "PossiblyAxolotl",
-			role = "Particles System"
-		},
-		{
 			qr   = "assets/images/pdstuff.png",
 			url  = "https://github.com/pdstuff/PlaydateSDF",
 			name = "pdstuff",
