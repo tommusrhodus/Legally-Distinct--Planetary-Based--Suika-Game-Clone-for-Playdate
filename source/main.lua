@@ -1,7 +1,12 @@
+-- The game was originally tuned for 28fps, with timings counted in frames.
+-- Everything now runs on real time, so convert those frame counts.
+function framesToMs(frames)
+	return frames * 1000 / 28
+end
+
 import "CoreLibs/object"
 import "CoreLibs/graphics"
 import "CoreLibs/sprites"
-import "CoreLibs/frameTimer"
 import "CoreLibs/timer"
 import "CoreLibs/easing"
 import "CoreLibs/qrcode"
@@ -21,8 +26,9 @@ local disp <const> = pd.display
 -- Is this the free build or not?
 isFreeBuild = true
 
--- Setup game constants.
-disp.setRefreshRate(28)
+-- Setup game constants. Physics runs at a fixed rate on real time, so the
+-- display can refresh as fast as the hardware allows.
+disp.setRefreshRate(50)
 gfx.clear(gfx.kColorBlack)
 gfx.setBackgroundColor(gfx.kColorBlack)
 pd.setMenuImage(gfx.image.new("assets/images/menu-image.png"))
@@ -109,7 +115,7 @@ function startGame()
 
 	game = Game(data.kawaii)
 	game:setGuiImage()
-	game.guiImage:add()
+	game:addGui()
 end
 
 function restartGame()
@@ -122,6 +128,8 @@ function restartGame()
 end
 
 function endGame()
+	physics.clear()
+
 	gfx.sprite.performOnAllSprites(function(sprite)
 		sprite:remove()
 	end)
@@ -133,12 +141,24 @@ function endGame()
 	menu = Menu()
 end
 
+-- Longest frame time passed on to movement, so a stall (loading, the system
+-- menu) doesn't make the cursor or effects jump.
+local kMaxFrameTime <const> = 1 / 15
+
 function pd.update()
+	local dt = math.min(pd.getElapsedTime(), kMaxFrameTime)
+	pd.resetElapsedTime()
+
+	-- Input and physics first so the sprites drawn this frame are current.
+	if game then
+		game:update(dt)
+	end
+
 	gfx.sprite.update()
-	pd.frameTimer.updateTimers()
+	pd.timer.updateTimers()
 
 	if game then
-		game:update()
+		game:draw(dt)
 	end
 
 	if menu then

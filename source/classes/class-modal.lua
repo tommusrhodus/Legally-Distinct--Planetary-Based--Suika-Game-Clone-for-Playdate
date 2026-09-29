@@ -84,8 +84,6 @@ function Modal:init()
 end
 
 function Modal:update()
-	pd.timer.updateTimers()
-
 	if not self:isVisible() then
 		return
 	end
