@@ -9,3 +9,9 @@
 *.pdx
 *.zip
 art/
+# Ignore C build output.
+build/
+[Ss]ource/pdex.bin
+[Ss]ource/pdex.dylib
+[Ss]ource/pdex.elf
+tests/physics_test

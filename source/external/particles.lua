@@ -167,8 +167,6 @@ local function decay(partlist, decay)
 		if particle.size <= 0 then
 			particle.size = 0
 		end
-
-		partlist[part] = particle
 	end
 
 	for part = #partlist, 1, -1 do
@@ -185,10 +183,13 @@ class("ParticleCircle", { type = 1 }).extends(Particle)
 
 function ParticleCircle:create(amount)
 	for i = 1, amount, 1 do
+		local dir = math.random(self.spread[1], self.spread[2])
 		local part = {
 			x = self.x,
 			y = self.y,
-			dir = math.random(self.spread[1], self.spread[2]),
+			dir = dir,
+			dx = math.sin(math.rad(dir)),
+			dy = -math.cos(math.rad(dir)),
 			size = math.random(self.size[1], self.size[2]) * precision,
 			speed = math.random(self.speed[1], self.speed[2]) * precision,
 			acceleration = math.random(self.acceleration[1], self.acceleration[2]) * precision,
@@ -205,7 +206,9 @@ function ParticleCircle:add(amount)
 	self:create(amount)
 end
 
-function ParticleCircle:update()
+-- step is the number of original 28fps frames this update covers, so particles
+-- move and fade at the same speed at any framerate.
+function ParticleCircle:update(step)
 	local w = playdate.graphics.getLineWidth()
 	playdate.graphics.setColor(self.colour)
 	for part = 1, #self.particles, 1 do
@@ -217,16 +220,14 @@ function ParticleCircle:update()
 			playdate.graphics.drawCircleAtPoint(circ.x, circ.y, circ.size)
 		end
 
-		circ.x += math.sin(math.rad(circ.dir)) * circ.speed
-		circ.y -= math.cos(math.rad(circ.dir)) * circ.speed
+		circ.x += circ.dx * circ.speed * step
+		circ.y += circ.dy * circ.speed * step
 
-		circ.speed += circ.acceleration / 100
-
-		self.particles[part] = circ
+		circ.speed += circ.acceleration / 100 * step
 	end
 	playdate.graphics.setLineWidth(w)
 	if self.mode == 1 then
-		decay(self.particles, self.decay)
+		decay(self.particles, self.decay * step)
 	elseif self.mode == 0 then
 		disappear(self.particles)
 	elseif self.mode == 2 then
@@ -242,9 +243,17 @@ class("Particles").extends()
 
 Particles.modes = { DISAPPEAR = 0, DECAY = 1, LOOP = 2, STAY = 3 }
 
-function Particles:update()
-	for particle = 1, #particles, 1 do
-		particles[particle]:update()
+function Particles.update(dt)
+	local step = dt * 28
+
+	for i = #particles, 1, -1 do
+		local emitter = particles[i]
+		emitter:update(step)
+
+		-- Emitters that have run out of particles are done for good.
+		if #emitter.particles == 0 then
+			table.remove(particles, i)
+		end
 	end
 end
 

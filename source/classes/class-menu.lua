@@ -40,22 +40,22 @@ function Menu:init()
 	self.bigFont = gfx.font.new("assets/fonts/Nontendo-Bold-2x")
 
 	-- Animate the images in.
-	local legalTimer = pd.frameTimer.new(40, 600, 200, pd.easingFunctions.outElastic)
+	local legalTimer = pd.timer.new(framesToMs(40), 600, 200, pd.easingFunctions.outElastic)
 	legalTimer.updateCallback = function()
 		self.legalText:moveTo(legalTimer.value, 20)
 	end
 
-	local planetTimer = pd.frameTimer.new(40, -200, 200, pd.easingFunctions.outElastic)
+	local planetTimer = pd.timer.new(framesToMs(40), -200, 200, pd.easingFunctions.outElastic)
 	planetTimer.updateCallback = function()
 		self.planetText:moveTo(planetTimer.value, 57)
 	end
 
-	local suikaTimer = pd.frameTimer.new(40, 600, 200, pd.easingFunctions.outElastic)
+	local suikaTimer = pd.timer.new(framesToMs(40), 600, 200, pd.easingFunctions.outElastic)
 	suikaTimer.updateCallback = function()
 		self.suikaText:moveTo(suikaTimer.value, 100)
 	end
 
-	local playdateTimer = pd.frameTimer.new(40, -200, 200, pd.easingFunctions.outElastic)
+	local playdateTimer = pd.timer.new(framesToMs(40), -200, 200, pd.easingFunctions.outElastic)
 	playdateTimer.updateCallback = function()
 		self.playdateText:moveTo(playdateTimer.value, 140)
 	end
@@ -276,7 +276,7 @@ function Menu:update()
 			"assets/images/legally.png"))
 		self.legalText:moveTo(600, 32)
 
-		local legalTimer = pd.frameTimer.new(40, 600, 200, pd.easingFunctions.outElastic)
+		local legalTimer = pd.timer.new(framesToMs(40), 600, 200, pd.easingFunctions.outElastic)
 		legalTimer.updateCallback = function()
 			self.legalText:moveTo(legalTimer.value, 20)
 		end
